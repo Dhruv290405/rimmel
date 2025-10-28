@@ -1,29 +1,33 @@
-import type { MaybeFuture, Observer, OperatorPipeline } from '../types/futures';
+import type { MaybeFuture, Observer } from '../types/futures';
 import type { RMLTemplateExpressions } from '../types/internal';
 
 import { Subject } from 'rxjs';
+import type { OperatorFunction } from 'rxjs';
 
 /**
  * Create an "input pipe" by prepending operators to the input of an Observer, Subject, BehaviorSubject, or plain subscriber function.
  * This works the opposite of RxJS's pipe(), which works on the output of an Observable.
 **/
 export const pipeIn =
-	<I, O=I>(target: RMLTemplateExpressions.TargetEventHandler<O>, ...pipeline: OperatorPipeline<I, O>): Observer<I> => {
+	<I, O = I>(target: RMLTemplateExpressions.TargetEventHandler<O>, ...pipeline: OperatorFunction<any, any>[]): Observer<I> => {
 		const source = new Subject<I>();
-		const __args = pipeline as any[];
-		source
-			// use apply to avoid tuple-spread typing issues
-			.pipe.apply(source, __args as any)
-			.subscribe(target as any)
-		;
 
-		// FIXME: will we need to unsubscribe? Then store a reference for unsubscription
-		// TODO: can we/should we delay subscription until mounted? Could miss the first events otherwise
-		// TODO: check if a Subject is needed, or if we can connect directly to the target (e.g. w/ Observature.addSource)
+		// Subscribe the processed stream to the provided target (function or Observer)
+		// Apply operators one by one to avoid variadic tuple spreading issues
+		let processed: any = source as any;
+		for (const op of pipeline) {
+			processed = op(processed);
+		}
 
-		return source;
-	}
-;
+		if (typeof target === 'function') {
+			processed.subscribe((v: O) => (target as (t: O) => void)(v));
+		} else {
+			processed.subscribe(target as any);
+		}
+
+		// Return an Observer-like object that pushes values into the subject
+		return source as unknown as Observer<I>;
+	};
 
 /**
  * Create an "input pipe" by prepending operators to an Observer or a Subject
@@ -42,13 +46,9 @@ export const pipeIn =
 **/
 // Loosen typing temporarily to unblock widespread call-sites across the codebase.
 // TODO: restore strong generics once the Event/Observer type contracts are reconciled.
-export const inputPipe = <I = any, O = any>(...pipeline: any[]) =>
-		(target: RMLTemplateExpressions.TargetEventHandler<O>) => {
-			const __args = pipeline as any[];
-			// use apply to avoid tuple-spread typing issues
-			return (pipeIn as any).apply(null, [target as any].concat(__args));
-		}
-;
+export const inputPipe = <I = any, O = any>(...pipeline: OperatorFunction<any, any>[]) =>
+	(target: RMLTemplateExpressions.TargetEventHandler<O>) => pipeIn<I, O>(target, ...pipeline);
+
 
 export const feed = pipeIn;
 export const feedIn = pipeIn;
@@ -59,6 +59,8 @@ export const reversePipe = inputPipe;
 export const source = (...reversePipeline: any[]) =>
 	(pipeIn as any).apply(null, [<Observer<any>>reversePipeline.pop(), ...reversePipeline]);
 
-export const sink = (source: MaybeFuture<any>, ...pipeline: OperatorPipeline<any, any>) =>
-	source.pipe(...pipeline);
+export const sink = (source: MaybeFuture<any>, ...pipeline: OperatorFunction<any, any>[]) =>
+	// `source` may be a Promise or Observable — when Observable, call its pipe
+	// We rely on the runtime shape; TypeScript typing here is intentionally permissive.
+	(source as any).pipe(...pipeline);
 
