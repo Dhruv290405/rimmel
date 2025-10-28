@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Rimmel — Drag and Drop Example</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 20px; }
+      .box { width: 140px; height: 80px; background: #4f46e5; color: white; display:flex; align-items:center; justify-content:center; border-radius:8px; user-select:none; position: absolute; }
+      #demo-area { position: relative; width: 800px; height: 400px; border: 1px dashed #ccc; }
+    </style>
+  </head>
+  <body>
+    <h1>Rimmel — Drag and Drop mixin (demo)</h1>
+    <p>Open this file in a browser. The demo uses a lightweight mixin that merges pointer handlers into an element.</p>
+
+    <div id="demo-area">
+      <!-- boxes will be rendered here -->
+      <div id="root"></div>
+    </div>
+
+    <script type="module">
+      // Use Skypack CDN for quick demo (module).
+      import { rml } from 'https://cdn.skypack.dev/rimmel';
+
+      // A simple draggable mixin that merges event handlers into the host element.
+      function DraggableMixin() {
+        let startX = 0, startY = 0, origX = 0, origY = 0, dragging = false;
+
+        function onPointerDown(e) {
+          const el = e.currentTarget;
+          dragging = true;
+          el.setPointerCapture?.(e.pointerId);
+          startX = e.clientX;
+          startY = e.clientY;
+          const rect = el.getBoundingClientRect();
+          // store original position relative to offsetParent
+          origX = rect.left - (el.offsetParent?.getBoundingClientRect().left || 0);
+          origY = rect.top - (el.offsetParent?.getBoundingClientRect().top || 0);
+
+          function onMove(ev) {
+            if (!dragging) return;
+            const dx = ev.clientX - startX;
+            const dy = ev.clientY - startY;
+            el.style.transform = `translate(${origX + dx}px, ${origY + dy}px)`;
+          }
+
+          function onUp(ev) {
+            dragging = false;
+            el.releasePointerCapture?.(ev.pointerId);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+          }
+
+          window.addEventListener('pointermove', onMove);
+          window.addEventListener('pointerup', onUp);
+        }
+
+        return {
+          // event handlers or attributes to merge into the host
+          onpointerdown: onPointerDown,
+          style: { touchAction: 'none', willChange: 'transform' }
+        };
+      }
+
+      // Create two draggable boxes
+      const Box = (text, x, y) => rml`
+        <div class="box" style="transform: translate(${x}px, ${y}px);" ...${DraggableMixin()}>${text}</div>
+      `;
+
+      document.getElementById('root').innerHTML = rml`
+        ${Box('Drag me', 20, 20)}
+        ${Box('Me too', 200, 80)}
+      `;
+    </script>
+  </body>
+</html>
