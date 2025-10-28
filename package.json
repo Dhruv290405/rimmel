@@ -23,14 +23,20 @@
     "./src/lifecycle/data-binding.ts"
   ],
   "scripts": {
-    "build": "rimraf dist && rollup --config rollup.config.js",
-    "dev": "rimraf dist && rollup -w --config rollup.config.js",
+  "build": "rimraf dist && rollup --config rollup.config.js",
+  "dev": "rimraf dist && rollup -w --config rollup.config.js",
     "handbook:dev": "npx typedoc --watch",
     "handbook": "npx typedoc",
-    "kitchen-sink": "cd examples/kitchen-sink && vite",
+  "kitchen-sink": "cd examples/kitchen-sink && vite",
+  "examples:drag-and-drop:local": "npm run build && vite examples/drag-and-drop",
+  "examples:data-grid:local": "npm run build && vite examples/data-grid",
+  "examples:serve": "vite",
     "website": "cd docs && bundle exec jekyll build",
     "website:local": "cd docs && bundle exec jekyll serve",
-    "test": "bun test",
+  "test": "bun test",
+  "bench:serve": "http-server -c-1 -p 8080 benchmarks",
+  "bench:run": "node .github/bench-runner.js",
+  "bench": "npm run build && npm run bench:serve & npm run bench:run",
     "test:types": "tsd --files src/**/*.test-d.ts"
   },
   "repository": {
@@ -85,7 +91,9 @@
     "tslib": "^2.8.0",
     "typedoc": "^0.27.5",
     "typescript": "^5.7.2",
-    "vite": "^5.4.9"
+    "vite": "^5.4.9",
+    "http-server": "^14.1.1",
+    "playwright": "^1.43.0"
   },
   "peerDependencies": {
     "rxjs": ">=5.5.0 || >=6.0.0 || >=7.0.0 || >=8.0.0-0 <8.0.0"

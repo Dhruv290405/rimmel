@@ -1,0 +1,25 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run-bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Start bench server
+        run: npx http-server -c-1 -p 8080 benchmarks &
+      - name: Run bench runner
+        run: node .github/bench-runner.js

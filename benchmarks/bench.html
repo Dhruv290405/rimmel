@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Rimmel Benchmark</title>
+    <style>body{font-family:system-ui;padding:12px}#out{white-space:pre-wrap}</style>
+  </head>
+  <body>
+    <h2>Rimmel microbenchmark</h2>
+    <div id="out">Running...</div>
+    <script type="module">
+      import { rml } from '../dist/esm/index.js';
+
+      // Microbenchmark: update a counter 10000 times and measure DOM update time
+      const N = 10000;
+      const root = document.createElement('div');
+      document.body.appendChild(root);
+
+      const start = performance.now();
+      for (let i = 0; i < N; i++) {
+        root.innerHTML = rml`<div>counter: ${i}</div>`;
+      }
+      const end = performance.now();
+      const elapsed = end - start;
+
+      const result = { iterations: N, ms: elapsed, perOp: elapsed / N };
+      document.getElementById('out').textContent = JSON.stringify(result, null, 2);
+      // also print to console so headless runner can parse
+      console.log('BENCH_RESULT:' + JSON.stringify(result));
+    </script>
+  </body>
+</html>
