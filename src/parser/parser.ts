@@ -18,6 +18,7 @@ import { Mixin } from "../sinks/mixin-sink";
 import { InnerHTML } from "../sinks/inner-html-sink";
 import { TextContent } from "../sinks/text-content-sink";
 import { StyleObjectSink, StylePreSink, STYLE_OBJECT_SINK_TAG } from "../sinks/style-sink";
+import { DatasetItemPreSink } from "../sinks/dataset-sink";
 import { isFunction } from "../utils/is-function";
 import { isObservable, isPromise } from "../types/futures"
 import { isRMLEventListener } from "../types/event-listener";
@@ -209,7 +210,7 @@ export function rml(strings: TemplateStringsArray, ...expressions: RMLTemplateEx
 							isBooleanAttribute = BOOLEAN_ATTRIBUTES.has(attributeName);
 							const isDatasetAttribute = attributeName.startsWith('data-');
 
-							sink = (sinkByAttributeName.get(attributeName) ?? (isBooleanAttribute && DOMAttributePreSink(<WritableElementAttribute>attributeName)) ?? (isDatasetAttribute && DatasetItemPresink(attributeName))) || FixedAttributePreSink(attributeName);
+							sink = (sinkByAttributeName.get(attributeName) ?? (isBooleanAttribute && DOMAttributePreSink(<WritableElementAttribute>attributeName)) ?? (isDatasetAttribute && DatasetItemPreSink(attributeName))) || FixedAttributePreSink(attributeName);
 							// TODO: hard-match attributeName with a corresponding SINK_TAG...
 							handler = PreSink(attributeName, sink, expression, attributeName);
 						}

@@ -1,3 +1,11 @@
+source 'https://rubygems.org'
+
+gem 'jekyll', '~> 4.2'
+gem 'bundler', '>= 2.0'
+
+# Add any jekyll plugins used by the docs here, for example:
+# gem 'jekyll-feed'
+# gem 'jekyll-seo-tag'
 source "https://rubygems.org"
 # Hello! This is where you manage which Jekyll version is used to run.
 # When you want to use a different version, change it below, save the

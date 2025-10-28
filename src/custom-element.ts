@@ -82,9 +82,10 @@ class RimmelElement extends HTMLElement {
 			Object.keys(events)
 				.map(name => (<SourceBindingConfiguration<any>[]>refs).find(x => isSourceBindingConfiguration(x)))
 				.filter(f=>!!f)
-				.forEach(f => {
+					.forEach(f => {
 					// TODO: store subscription for later removal
-					const subscription = subscribe(this, this.attrs[`on${f.eventName}`], f.listener)
+					// cast the attribute sink to any to accept Observers or EventListeners
+					const subscription = subscribe(this, this.attrs[`on${f.eventName}`] as any, f.listener as any)
 				})
 			;
 
