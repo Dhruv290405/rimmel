@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
@@ -28,7 +28,8 @@ jobs:
           working-directory: docs
 
       - name: Install Node.js dependencies
-        run: npm ci --no-audit --no-fund
+        # skip optional deps to reduce native builds during CI installs
+        run: npm ci --no-audit --no-fund --no-optional --loglevel=warn
 
       - name: Install Jekyll dependencies
         run: |
