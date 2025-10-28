@@ -15,44 +15,6 @@
     <h1>Rimmel — Data Grid (virtualised rows)</h1>
     <div id="grid-root"></div>
 
-    <script type="module">
-      import { rml } from '../../dist/esm/index.js';
-
-      const ROW_COUNT = 2000;
-      const ROW_HEIGHT = 28;
-
-      const rows = Array.from({length: ROW_COUNT}, (_, i) => ({ id: i, text: `Row ${i}` }));
-
-      function Grid() {
-        const container = document.createElement('div');
-        container.id = 'grid';
-        container.style.height = '400px';
-        container.style.overflow = 'auto';
-
-        const viewport = document.createElement('div');
-        viewport.style.position = 'relative';
-        viewport.style.height = `${ROW_COUNT * ROW_HEIGHT}px`;
-        container.appendChild(viewport);
-
-        function render() {
-          const scrollTop = container.scrollTop;
-          const start = Math.floor(scrollTop / ROW_HEIGHT);
-          const visible = Math.ceil(container.clientHeight / ROW_HEIGHT) + 2;
-          const slice = rows.slice(start, start + visible);
-
-          viewport.innerHTML = rml`
-            ${slice.map((r, idx) => rml`<div class="row" style="transform: translateY(${(start + idx) * ROW_HEIGHT}px);"><div class="cell">${r.text}</div></div>`)}
-          `;
-        }
-
-        container.addEventListener('scroll', () => requestAnimationFrame(render));
-        // initial render
-        render();
-
-        return container;
-      }
-
-      document.getElementById('grid-root').appendChild(Grid());
-    </script>
+    <script type="module" src="./index.ts"></script>
   </body>
 </html>

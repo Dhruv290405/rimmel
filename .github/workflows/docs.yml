@@ -1,0 +1,40 @@
+name: Build and publish docs
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+
+      - name: Install Jekyll
+        run: |
+          gem install bundler jekyll
+
+      - name: Build docs with Jekyll
+        working-directory: ./docs
+        run: |
+          # If the project has a Gemfile this will use it, otherwise run jekyll directly
+          if [ -f Gemfile ]; then bundle install && bundle exec jekyll build -d ../_site; else jekyll build -s . -d ../_site; fi
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1

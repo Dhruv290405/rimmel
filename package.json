@@ -37,6 +37,7 @@
   "bench:serve": "http-server -c-1 -p 8080 benchmarks",
   "bench:run": "node .github/bench-runner.js",
   "bench": "npm run build && npm run bench:serve & npm run bench:run",
+  "bench:local": "npm run build && concurrently \"npx http-server -c-1 -p 8080 benchmarks\" \"node .github/bench-runner.js\" --success first",
     "test:types": "tsd --files src/**/*.test-d.ts"
   },
   "repository": {
@@ -93,7 +94,8 @@
     "typescript": "^5.7.2",
     "vite": "^5.4.9",
     "http-server": "^14.1.1",
-    "playwright": "^1.43.0"
+    "playwright": "^1.43.0",
+    "concurrently": "^8.2.0"
   },
   "peerDependencies": {
     "rxjs": ">=5.5.0 || >=6.0.0 || >=7.0.0 || >=8.0.0-0 <8.0.0"
