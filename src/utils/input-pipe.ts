@@ -10,9 +10,11 @@ import { Subject } from 'rxjs';
 export const pipeIn =
 	<I, O=I>(target: RMLTemplateExpressions.TargetEventHandler<O>, ...pipeline: OperatorPipeline<I, O>): Observer<I> => {
 		const source = new Subject<I>();
+		const __args = pipeline as any[];
 		source
-			.pipe(...pipeline)
-			.subscribe(target)
+			// use apply to avoid tuple-spread typing issues
+			.pipe.apply(source, __args as any)
+			.subscribe(target as any)
 		;
 
 		// FIXME: will we need to unsubscribe? Then store a reference for unsubscription
@@ -38,9 +40,14 @@ export const pipeIn =
  *   <input onkeypress="${MyUsefulEventAdapter(targetObserver)}">
  * `;
 **/
-export const inputPipe = <I extends any, O extends any>(...pipeline: OperatorPipeline<I, O>) =>
-	(target: RMLTemplateExpressions.TargetEventHandler<O>) =>
-		pipeIn<I, O>(target, ...pipeline)
+// Loosen typing temporarily to unblock widespread call-sites across the codebase.
+// TODO: restore strong generics once the Event/Observer type contracts are reconciled.
+export const inputPipe = <I = any, O = any>(...pipeline: any[]) =>
+		(target: RMLTemplateExpressions.TargetEventHandler<O>) => {
+			const __args = pipeline as any[];
+			// use apply to avoid tuple-spread typing issues
+			return (pipeIn as any).apply(null, [target as any].concat(__args));
+		}
 ;
 
 export const feed = pipeIn;
@@ -49,8 +56,8 @@ export const feedIn = pipeIn;
 export const reversePipe = inputPipe;
 
 // TBC
-export const source = <I, O=I>(...reversePipeline: [...OperatorPipeline<I, O>, (Observer<any> | Function)]) =>
-	pipeIn(<Observer<any>>reversePipeline.pop(), ...reversePipeline);
+export const source = (...reversePipeline: any[]) =>
+	(pipeIn as any).apply(null, [<Observer<any>>reversePipeline.pop(), ...reversePipeline]);
 
 export const sink = (source: MaybeFuture<any>, ...pipeline: OperatorPipeline<any, any>) =>
 	source.pipe(...pipeline);

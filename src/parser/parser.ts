@@ -246,9 +246,23 @@ export function rml(strings: TemplateStringsArray, ...expressions: RMLTemplateEx
 					} else {
 						// Merge static (string, number) properties of the mixin inline in the rendered HTML
 						// and pass the rest as a future sink
-						const [staticAttributes, deferredAttributes] = Object.entries(expression as AttributeObject || {})
-							.reduce((acc, [k, v]) => (acc[+(isFutureSinkAttributeValue(v) || isRMLEventListener(k, v) && isFunction(v) || /^(?:rml:)?onmount$/.test(k))].push([k, v]), acc), [[] as [HTMLAttributeName, PresentSinkAttributeValue][], [] as [HTMLAttributeName, FutureSinkAttributeValue][]])
-						;
+						// Use an explicit loop to avoid complex tuple inference issues with `reduce`.
+						const entries = Object.entries(expression as AttributeObject ?? {}) as [HTMLAttributeName, PresentSinkAttributeValue | FutureSinkAttributeValue][];
+
+						const staticAttributes: [HTMLAttributeName, PresentSinkAttributeValue][] = [];
+						const deferredAttributes: [HTMLAttributeName, FutureSinkAttributeValue][] = [];
+
+						for (const [k, v] of entries) {
+							const shouldDefer = isFutureSinkAttributeValue(v)
+								|| (isRMLEventListener(k, v) && isFunction(v))
+								|| /^(?:rml:)?onmount$/.test(k);
+
+							if (shouldDefer) {
+								deferredAttributes.push([k, v as FutureSinkAttributeValue]);
+							} else {
+								staticAttributes.push([k, v as PresentSinkAttributeValue]);
+							}
+						}
 
 						acc += staticAttributes.map(([k, v])=>`${k}="${v}"`).join(' ');
 						// if(split[0].length)

@@ -79,7 +79,7 @@ export const MockElement = (props?: Record<string, any>): MockElement => {
         dispatchEvent(event: Event) {
             (<HTMLEventSource>el)[`on${event.type}` as RMLEventAttributeName]?.(event);
         },
-        childNodes: [] as NodeListOf<ChildNode>,
+    childNodes: [] as unknown as NodeListOf<ChildNode>,
         ...props,
     };
 
