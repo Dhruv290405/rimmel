@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
     steps:
       - name: Checkout repository
@@ -16,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 22
+          node-version: 18
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -26,7 +28,7 @@ jobs:
           working-directory: docs
 
       - name: Install Node.js dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Install Jekyll dependencies
         run: |
