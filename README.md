@@ -11,12 +11,37 @@ Rimmel is a powerful, fast and lightweight JavaScript UI library for creating we
 It implements [RML](https://github.com/ReactiveHTML/reactive-markup), the Reactive Markup which makes your HTML work with streams in a seamless way.
 
 ## Getting started
-If you are new to reactive streams, there is a [3m crash-course](https://medium.com/@fourtyeighthours/the-mostly-inaccurate-crash-course-for-reactive-ui-development-w-rxjs-ddbb7e5e526e) tailored for UI development with Rimmel, arguably the simplest RxJS introduction around to get you started.
+If you are new to reactive streams, there is a [3m crash-course](https://medium.com/@fourtyeighthours/the-mostly-inaccurate-crash-course-for-reactive-ui-development-w-rxjs-ddbb7e5e526e) tailored for UI development with Rimmel.
 
-If you are new to the reactive and functional programming paradigms, this [interactive tutorial](https://reactivex.io/learnrx/) may be an especially useful introduction.
+If you are new to reactive and functional programming, this [interactive tutorial](https://reactivex.io/learnrx/) is helpful.
 
-If you come from Angular, check out [this page](./docs/migrating/angular.md)<br>
-If you come from React, check out [this page](./docs/migrating/react.md)<br>
+If you come from Angular, check out [this page](./docs/migrating/angular.md). If you come from React, check out [this page](./docs/migrating/react.md).
+
+### Quick start (local development)
+These commands assume you have Node.js (16+) and Git installed.
+
+PowerShell (Windows) example:
+
+```powershell
+cd "e:\rimmel\rimmel"        # or where you cloned the repo
+npm install
+npm run build      # produce the distributable
+npm run kitchen-sink   # run the kitchen-sink demo (if available)
+```
+
+Or with bun/pnpm/yarn if you prefer. See `package.json` scripts for details.
+
+If you prefer a zero-install approach, use the published package from a CDN:
+
+```js
+import { rml } from 'https://cdn.skypack.dev/rimmel';
+```
+
+Where to start in the repo:
+- `src/` — library source
+- `examples/` — runnable example code (drag-and-drop, data-grid, kitchen-sink)
+- `benchmarks/` — benchmark helpers and scripts
+- `docs/` — extended guides (migrating, SSR, adapters)
 
 ## Hello World 👋🌏🏖️😎
 Let's jump straight in. The "Hello World" for reactive user interfaces is the classic click counter: one button, you click it, ze counts it.
