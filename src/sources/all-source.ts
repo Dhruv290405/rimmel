@@ -1,7 +1,7 @@
 import type { CSSSelector } from '../types/dom';
 import type { RMLTemplateExpressions } from '../types/internal';
 import { map } from 'rxjs';
-import { pipeIn } from '../utils/input-pipe';
+import { pipeIn, inputPipe } from '../utils/input-pipe';
 
 /**
  * An Event Source emitting the "[event.clientX, event.clientY]" mouse coordinates
@@ -11,11 +11,12 @@ import { pipeIn } from '../utils/input-pipe';
 export const All =
 	<T>
 	(querySelector: CSSSelector | CSSSelector[], target: RMLTemplateExpressions.TargetEventHandler<Element[]>) =>
-		pipeIn<Event, Element[]>(target,
+		// Use inputPipe to avoid tuple/spread typing issues with pipeIn in some TS configs
+		inputPipe(
 			map((e: Event) => (<CSSSelector[]>[]).concat(querySelector)
-					.flatMap(querySelector=>[...(e.currentTarget as Element).querySelectorAll(querySelector)])
-			),
-		)
+				.flatMap(querySelector=>[...(e.currentTarget as Element).querySelectorAll(querySelector)])
+			)
+		)(target)
 ;
 
 export const qsa = (qs: CSSSelector | CSSSelector[]) =>

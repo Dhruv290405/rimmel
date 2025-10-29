@@ -1,7 +1,7 @@
 import { RMLEventAttributeName } from "./types/dom";
 
 type HTMLEventSource = {
-    [key in RMLEventAttributeName]?: any;
+    [key in RMLEventAttributeName]?: EventListenerOrEventListenerObject | undefined;
 }
 
 export interface MockElement extends HTMLElement {
@@ -28,7 +28,7 @@ export interface MockElement extends HTMLElement {
     childNodes: NodeListOf<ChildNode>;
 };
 
-export const MockElement = (props?: Record<string, any>): MockElement => {
+export const MockElement = (props?: Record<string, unknown>): MockElement => {
     const el = <MockElement>{
         'focus': () => {},
         'blur': () => {},
@@ -74,12 +74,19 @@ export const MockElement = (props?: Record<string, any>): MockElement => {
                 el.innerHTML = html + el.innerHTML
         },
         addEventListener(eventName: string, handler: EventListenerOrEventListenerObject) {
-            (<HTMLEventSource>el)[`on${eventName}` as RMLEventAttributeName] = handler;
+            (el as unknown as HTMLEventSource)[`on${eventName}` as RMLEventAttributeName] = handler;
         },
         dispatchEvent(event: Event) {
-            (<HTMLEventSource>el)[`on${event.type}` as RMLEventAttributeName]?.(event);
+            const handler = (el as unknown as HTMLEventSource)[`on${event.type}` as RMLEventAttributeName];
+            if (!handler) return false;
+            if (typeof handler === 'function') {
+                (handler as EventListener)(event);
+            } else if ((handler as EventListenerObject).handleEvent) {
+                (handler as EventListenerObject).handleEvent(event);
+            }
+            return true;
         },
-        childNodes: [] as NodeListOf<ChildNode>,
+    childNodes: [] as unknown as NodeListOf<ChildNode>,
         ...props,
     };
 

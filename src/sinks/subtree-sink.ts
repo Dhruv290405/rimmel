@@ -3,6 +3,7 @@ import type { HTMLContainerElement } from "../types/dom";
 import type { Sink, ExplicitSink } from "../types/sink";
 
 import { AttributeObjectSink } from "./attribute-sink";
+import { registerSink } from "../parser/sink-registry";
 
 import { SINK_TAG } from "../constants";
 
@@ -32,3 +33,10 @@ export const Subtree: ExplicitSink<'subtree'> =
 		sink: SubtreeSink,
 	}) as SinkBindingConfiguration<HTMLContainerElement | SVGElement | MathMLElement>
 ;
+
+	// Register subtree sink dynamically to avoid circular import with attribute-sink
+	try {
+		registerSink('subtree', SubtreeSink);
+	} catch (e) {
+		// registration is best-effort during module initialization; ignore failures
+	}

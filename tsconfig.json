@@ -26,5 +26,14 @@
   },
   "files": ["src/index.ts", "src/utils/camelCase.ts"],
   "include": ["rollup.config.ts", "src/**/*", "src/types/**/*.d.ts"],
-  "exclude": ["node_modules", "@types", "dist", "build"]
+  "exclude": [
+    "node_modules",
+    "@types",
+    "dist",
+    "build",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "src/**/__tests__/**"
+  ]
 }

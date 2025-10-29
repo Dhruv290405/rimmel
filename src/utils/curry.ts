@@ -3,19 +3,22 @@ import type { OperatorFunction } from 'rxjs';
 
 import { inputPipe, pipeIn } from '../utils/input-pipe';
 import { pipe } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 /**
  * Currying "out" for observable streams
  * Create a curried observable stream from a given source
  * by applying the specified pipeline to it
  */
-export const curryOut = <I, O>(...args: OperatorFunction<I, O>[] | [...OperatorFunction<any, any>, Observable<O>]) => {
-	const source = args.at(-1)?.subscribe ? args.pop(): undefined;
-	const stream = pipe(
-		...args,
-	);
+export const curryOut = (...args: Array<OperatorFunction<any, any> | unknown>) => {
+	const maybeLast = args.at(-1);
+	const source = maybeLast && (maybeLast as any)?.subscribe ? (args.pop() as any) : undefined;
 
-	return source ? stream(source) : stream;
+	const ops = args as OperatorFunction<any, any>[];
+
+	const stream = (s: any) => ops.reduce((acc, fn) => fn(acc), s);
+
+	return source ? stream(source as any) : stream;
 };
 
 
@@ -28,6 +31,6 @@ export const curry =
 	<I, O>
 	(op: OperatorFunction<I, O>, destination?: RMLTemplateExpressions.Any) =>
 		destination
-			? pipeIn<I, O>(destination, op)
-			: inputPipe<I, O>(op)
+			? pipeIn(destination as any, op)
+			: inputPipe(op as OperatorFunction<any, any>)
 ;

@@ -18,7 +18,8 @@ jobs:
         with:
           node-version: 18
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        # skip optional deps to avoid native builds in CI; keep reduced logs
+        run: npm ci --no-audit --no-fund --no-optional --loglevel=warn
       - name: Build
         run: npm run build
       - name: Install Playwright browsers (for runner)

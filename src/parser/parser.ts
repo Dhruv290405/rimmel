@@ -18,6 +18,7 @@ import { Mixin } from "../sinks/mixin-sink";
 import { InnerHTML } from "../sinks/inner-html-sink";
 import { TextContent } from "../sinks/text-content-sink";
 import { StyleObjectSink, StylePreSink, STYLE_OBJECT_SINK_TAG } from "../sinks/style-sink";
+import { DatasetItemPreSink } from "../sinks/dataset-sink";
 import { isFunction } from "../utils/is-function";
 import { isObservable, isPromise } from "../types/futures"
 import { isRMLEventListener } from "../types/event-listener";
@@ -209,7 +210,7 @@ export function rml(strings: TemplateStringsArray, ...expressions: RMLTemplateEx
 							isBooleanAttribute = BOOLEAN_ATTRIBUTES.has(attributeName);
 							const isDatasetAttribute = attributeName.startsWith('data-');
 
-							sink = (sinkByAttributeName.get(attributeName) ?? (isBooleanAttribute && DOMAttributePreSink(<WritableElementAttribute>attributeName)) ?? (isDatasetAttribute && DatasetItemPresink(attributeName))) || FixedAttributePreSink(attributeName);
+							sink = (sinkByAttributeName.get(attributeName) ?? (isBooleanAttribute && DOMAttributePreSink(<WritableElementAttribute>attributeName)) ?? (isDatasetAttribute && DatasetItemPreSink(attributeName))) || FixedAttributePreSink(attributeName);
 							// TODO: hard-match attributeName with a corresponding SINK_TAG...
 							handler = PreSink(attributeName, sink, expression, attributeName);
 						}
@@ -245,9 +246,23 @@ export function rml(strings: TemplateStringsArray, ...expressions: RMLTemplateEx
 					} else {
 						// Merge static (string, number) properties of the mixin inline in the rendered HTML
 						// and pass the rest as a future sink
-						const [staticAttributes, deferredAttributes] = Object.entries(expression as AttributeObject || {})
-							.reduce((acc, [k, v]) => (acc[+(isFutureSinkAttributeValue(v) || isRMLEventListener(k, v) && isFunction(v) || /^(?:rml:)?onmount$/.test(k))].push([k, v]), acc), [[] as [HTMLAttributeName, PresentSinkAttributeValue][], [] as [HTMLAttributeName, FutureSinkAttributeValue][]])
-						;
+						// Use an explicit loop to avoid complex tuple inference issues with `reduce`.
+						const entries = Object.entries(expression as AttributeObject ?? {}) as [HTMLAttributeName, PresentSinkAttributeValue | FutureSinkAttributeValue][];
+
+						const staticAttributes: [HTMLAttributeName, PresentSinkAttributeValue][] = [];
+						const deferredAttributes: [HTMLAttributeName, FutureSinkAttributeValue][] = [];
+
+						for (const [k, v] of entries) {
+							const shouldDefer = isFutureSinkAttributeValue(v)
+								|| (isRMLEventListener(k, v) && isFunction(v))
+								|| /^(?:rml:)?onmount$/.test(k);
+
+							if (shouldDefer) {
+								deferredAttributes.push([k, v as FutureSinkAttributeValue]);
+							} else {
+								staticAttributes.push([k, v as PresentSinkAttributeValue]);
+							}
+						}
 
 						acc += staticAttributes.map(([k, v])=>`${k}="${v}"`).join(' ');
 						// if(split[0].length)

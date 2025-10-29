@@ -1,6 +1,7 @@
 import type { Inputs, RimmelComponent, SourceBindingConfiguration, SinkBindingConfiguration } from './types/internal';
-import type { Future } from './types/futures';
+import type { Future, MaybeFuture } from './types/futures';
 import type { Sink } from './types/sink';
+import type { EventListenerOrEventListenerObject } from './types/dom';
 
 import { RESOLVE_SELECTOR } from "./constants";
 import { isSinkBindingConfiguration, isSourceBindingConfiguration } from './types/internal';
@@ -23,22 +24,35 @@ interface RMLNamedNodeMap extends NamedNodeMap {
 	resolve: Attr;
 }
 
-const SubjectProxy = (defaults: Record<string | symbol, any> = {}) => {
-	const subjects = <Record<string | symbol, BehaviorSubject<unknown> | Subject<unknown>>>{};
+const SubjectProxy = (defaults: Record<string, unknown> = {}) => {
+	const subjects: Record<string, BehaviorSubject<unknown> | Subject<unknown>> = {};
 	return new Proxy({}, {
 		get(_target, prop) {
-			return subjects[prop] ?? (subjects[prop] = prop in defaults ? new BehaviorSubject(defaults[prop]) : new Subject());
+			const key = String(prop);
+			if (!(key in subjects)) {
+				if (key in defaults) {
+					const initial = defaults[key];
+					subjects[key] = new BehaviorSubject<unknown>(initial);
+				} else {
+					subjects[key] = new Subject<unknown>();
+				}
+			}
+			return subjects[key];
 		}
 	});
 };
 
-const SubjectProxy2 = (initials: Record<string | symbol, any> = {}, sources: Record<string | symbol, Future<any>> = {}) => {
-	//const subjects = <Record<string | symbol, BehaviorSubject<unknown> | Subject<unknown>>>;
-	const subjects = new Map<string | symbol, Subject<any>>();
+const SubjectProxy2 = (initials: Record<string, unknown> = {}, sources: Record<string, Future<unknown>> = {}) => {
+	const subjects = new Map<string, Subject<unknown>>();
 
 	return new Proxy(sources, {
 		get(_target, prop) {
-			return _target[prop] ?? subjects.get(prop) ?? subjects.set(prop, prop in initials ? new BehaviorSubject(initials[prop]) : new Subject()).get(prop);
+			const key = String(prop);
+			if (_target && key in _target) return _target[key];
+			if (subjects.has(key)) return subjects.get(key);
+			const s = key in initials ? new BehaviorSubject<unknown>(initials[key]) : new Subject<unknown>();
+			subjects.set(key, s);
+			return s;
 		}
 	});
 };
@@ -82,10 +96,15 @@ class RimmelElement extends HTMLElement {
 			Object.keys(events)
 				.map(name => (<SourceBindingConfiguration<any>[]>refs).find(x => isSourceBindingConfiguration(x)))
 				.filter(f=>!!f)
-				.forEach(f => {
-					// TODO: store subscription for later removal
-					const subscription = subscribe(this, this.attrs[`on${f.eventName}`], f.listener)
-				})
+						.forEach(f => {
+							// TODO: store subscription for later removal
+							// Narrow types: treat the attribute proxy as a MaybeFuture source and the listener as an EventListener
+							const targetSource = this.attrs[`on${f.eventName}`] as MaybeFuture<Event> | undefined;
+							const targetListener = f.listener as EventListenerOrEventListenerObject<Event> | undefined;
+							if (targetSource && targetListener) {
+								subscribe(this, targetSource, targetListener);
+							}
+						})
 			;
 
 			const sinkBindingConfigurations = refs.filter(r => isSinkBindingConfiguration(r));
