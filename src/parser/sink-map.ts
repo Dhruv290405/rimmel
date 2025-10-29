@@ -14,10 +14,12 @@ import { InnerHTMLSink } from "../sinks/inner-html-sink";
 import { InnerTextSink } from "../sinks/inner-text-sink";
 import { ReadonlySink } from "../sinks/readonly-sink";
 import { RemovedSink } from "../sinks/removed-sink";
-import { SubtreeSink } from "../sinks/subtree-sink";
+// Note: avoiding importing SubtreeSink and ToggleAttributePreSink here because
+// they create a circular import: attribute-sink -> parser/sink-map -> subtree-sink -> attribute-sink.
+// Subtree and toggle-attribute sinks are intentionally omitted from this static map
+// to break the cycle. They can be registered dynamically or handled specially where needed.
 import { StyleObjectSink } from "../sinks/style-sink";
 import { TextContentSink } from "../sinks/text-content-sink";
-import { ToggleAttributePreSink } from "../sinks/attribute-sink";
 import { ValueSink } from "../sinks/value-sink";
 
 export const sinkByAttributeName = new Map(<Iterable<readonly [string, Sink<any>]>>[
@@ -44,9 +46,7 @@ export const sinkByAttributeName = new Map(<Iterable<readonly [string, Sink<any>
 	['rml:focus',       FocusSink],
 //  ['rml:readonly',    ReadonlySink], // Can make this one act as an enumerated attribute that understands "false" and other values...
 	['rml:removed',     RemovedSink],
-	['rml:subtree',     SubtreeSink],
 	['removed',         RemovedSink],
-	['subtree',         SubtreeSink],
 ]);
 
 

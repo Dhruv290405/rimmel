@@ -95,7 +95,7 @@ export const CreateObservature = <I, O>(initial?: O) => {
 							return this;
 						}
 					}
-					return (target as any)[prop];
+					return (target as unknown as Record<string, unknown>)[prop];
 			}
 		}
 	}) as unknown as IObservature<I, O>;

@@ -3,6 +3,7 @@ import type { OperatorFunction } from 'rxjs';
 
 import { inputPipe, pipeIn } from '../utils/input-pipe';
 import { pipe } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 /**
  * Currying "out" for observable streams

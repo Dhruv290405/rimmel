@@ -12,7 +12,7 @@ export const All =
 	<T>
 	(querySelector: CSSSelector | CSSSelector[], target: RMLTemplateExpressions.TargetEventHandler<Element[]>) =>
 		// Use inputPipe to avoid tuple/spread typing issues with pipeIn in some TS configs
-		(inputPipe as any)(
+		inputPipe(
 			map((e: Event) => (<CSSSelector[]>[]).concat(querySelector)
 				.flatMap(querySelector=>[...(e.currentTarget as Element).querySelectorAll(querySelector)])
 			)

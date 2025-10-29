@@ -1,4 +1,5 @@
-import type { MaybeFuture, Observer } from '../types/futures';
+import type { MaybeFuture, Observer, ObserverFunction } from '../types/futures';
+import type { Observable as RxObservable } from 'rxjs';
 import type { RMLTemplateExpressions } from '../types/internal';
 
 import { Subject } from 'rxjs';
@@ -14,15 +15,17 @@ export const pipeIn =
 
 		// Subscribe the processed stream to the provided target (function or Observer)
 		// Apply operators one by one to avoid variadic tuple spreading issues
-		let processed: any = source as any;
+		let processed: Observable<any> = source as unknown as Observable<any>;
 		for (const op of pipeline) {
-			processed = op(processed);
+			processed = op(processed as any);
 		}
 
 		if (typeof target === 'function') {
-			processed.subscribe((v: O) => (target as (t: O) => void)(v));
+			// target is a function: subscribe with an ObserverFunction
+			processed.subscribe(target as unknown as ObserverFunction<O>);
 		} else {
-			processed.subscribe(target as any);
+			// target is an Observer
+			processed.subscribe(target as unknown as Observer<O>);
 		}
 
 		// Return an Observer-like object that pushes values into the subject
@@ -56,11 +59,15 @@ export const feedIn = pipeIn;
 export const reversePipe = inputPipe;
 
 // TBC
-export const source = (...reversePipeline: any[]) =>
-	(pipeIn as any).apply(null, [<Observer<any>>reversePipeline.pop(), ...reversePipeline]);
+export const source = (...reversePipeline: Array<OperatorFunction<any, any> | Observer<any>>) => {
+	const maybeObserver = reversePipeline.pop() as Observer<any> | undefined;
+	const ops = reversePipeline as OperatorFunction<any, any>[];
+	if (!maybeObserver) throw new Error('source(...) requires a final Observer argument');
+	return pipeIn(maybeObserver, ...ops);
+}
 
 export const sink = (source: MaybeFuture<any>, ...pipeline: OperatorFunction<any, any>[]) =>
 	// `source` may be a Promise or Observable — when Observable, call its pipe
 	// We rely on the runtime shape; TypeScript typing here is intentionally permissive.
-	(source as any).pipe(...pipeline);
+	(source as unknown as { pipe?: (...ops: OperatorFunction<any, any>[]) => any }).pipe?.(...pipeline as any);
 

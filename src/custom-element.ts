@@ -24,21 +24,35 @@ interface RMLNamedNodeMap extends NamedNodeMap {
 	resolve: Attr;
 }
 
-const SubjectProxy = (defaults: Record<string | symbol, unknown> = {}) => {
-	const subjects: Record<string | symbol, BehaviorSubject<unknown> | Subject<unknown>> = {};
+const SubjectProxy = (defaults: Record<string, unknown> = {}) => {
+	const subjects: Record<string, BehaviorSubject<unknown> | Subject<unknown>> = {};
 	return new Proxy({}, {
 		get(_target, prop) {
-			return subjects[prop] ?? (subjects[prop] = prop in defaults ? new BehaviorSubject((defaults as any)[prop]) : new Subject());
+			const key = String(prop);
+			if (!(key in subjects)) {
+				if (key in defaults) {
+					const initial = defaults[key];
+					subjects[key] = new BehaviorSubject<unknown>(initial);
+				} else {
+					subjects[key] = new Subject<unknown>();
+				}
+			}
+			return subjects[key];
 		}
 	});
 };
 
-const SubjectProxy2 = (initials: Record<string | symbol, unknown> = {}, sources: Record<string | symbol, Future<unknown>> = {}) => {
-	const subjects = new Map<string | symbol, Subject<unknown>>();
+const SubjectProxy2 = (initials: Record<string, unknown> = {}, sources: Record<string, Future<unknown>> = {}) => {
+	const subjects = new Map<string, Subject<unknown>>();
 
 	return new Proxy(sources, {
 		get(_target, prop) {
-			return _target[prop] ?? subjects.get(prop) ?? subjects.set(prop, prop in initials ? new BehaviorSubject((initials as any)[prop]) : new Subject()).get(prop);
+			const key = String(prop);
+			if (_target && key in _target) return _target[key];
+			if (subjects.has(key)) return subjects.get(key);
+			const s = key in initials ? new BehaviorSubject<unknown>(initials[key]) : new Subject<unknown>();
+			subjects.set(key, s);
+			return s;
 		}
 	});
 };
@@ -85,9 +99,11 @@ class RimmelElement extends HTMLElement {
 						.forEach(f => {
 							// TODO: store subscription for later removal
 							// Narrow types: treat the attribute proxy as a MaybeFuture source and the listener as an EventListener
-							const targetSource = this.attrs[`on${f.eventName}`] as unknown as MaybeFuture<any>;
-							const targetListener = f.listener as unknown as EventListenerOrEventListenerObject<any>;
-							const subscription = subscribe(this, targetSource, targetListener);
+							const targetSource = this.attrs[`on${f.eventName}`] as MaybeFuture<Event> | undefined;
+							const targetListener = f.listener as EventListenerOrEventListenerObject<Event> | undefined;
+							if (targetSource && targetListener) {
+								subscribe(this, targetSource, targetListener);
+							}
 						})
 			;
 
