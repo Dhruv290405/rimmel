@@ -21,8 +21,12 @@ import { RemovedSink } from "../sinks/removed-sink";
 import { StyleObjectSink } from "../sinks/style-sink";
 import { TextContentSink } from "../sinks/text-content-sink";
 import { ValueSink } from "../sinks/value-sink";
+import { registerBulk } from './sink-registry';
 
-export const sinkByAttributeName = new Map(<Iterable<readonly [string, Sink<any>]>>[
+// Register the common static entries into the central registry.
+// Note: Subtree and certain toggle-attribute sinks are intentionally omitted
+// from this list to avoid the attribute-sink -> sink-map -> subtree-sink -> attribute-sink cycle.
+registerBulk([
 	['appendHTML',      AppendHTMLSink],
 	['checked',         CheckedSink],
 	['class',           ClassObjectSink],
@@ -48,5 +52,7 @@ export const sinkByAttributeName = new Map(<Iterable<readonly [string, Sink<any>
 	['rml:removed',     RemovedSink],
 	['removed',         RemovedSink],
 ]);
+
+export { sinkByAttributeName } from './sink-registry';
 
 
